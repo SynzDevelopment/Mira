@@ -1,3 +1,4 @@
+// Import necessary modules
 require('dotenv').config();
 const { Events } = require('discord.js');
 const { GUILD_ID, UNVERIFIED_ROLE_ID, VERIFY_CHANNEL_ID } = process.env;
@@ -26,6 +27,16 @@ module.exports = {
     const verificationCode = generateVerificationCode();
 
     try {
+      // Create the user_data table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS user_data (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id VARCHAR(255) NOT NULL,
+          verification_code VARCHAR(6) NOT NULL
+        );
+      `;
+      await executeQuery(createTableQuery);
+
       // Assign UNVERIFIED_ROLE_ID to the new member
       const unverifiedRole = member.guild.roles.cache.get(UNVERIFIED_ROLE_ID);
       if (unverifiedRole) {
@@ -36,9 +47,9 @@ module.exports = {
       }
 
       // Execute SQL query to insert user data
-      const query = 'INSERT INTO user_data (user_id, verification_code) VALUES (?, ?)';
-      const values = [member.user.id, verificationCode];
-      const [rows, error] = await executeQuery(query, values);
+      const insertQuery = 'INSERT INTO user_data (user_id, verification_code) VALUES (?, ?)';
+      const insertValues = [member.user.id, verificationCode];
+      const [rows, error] = await executeQuery(insertQuery, insertValues);
 
       if (error) {
         console.error(`Error inserting user data into MariaDB: ${error}`);
